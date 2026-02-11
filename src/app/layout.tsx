@@ -98,6 +98,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         <LangProvider>{children}</LangProvider>
+        <SpeedInsights />
       </body>
     </html>
   );

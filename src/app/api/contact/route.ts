@@ -15,27 +15,20 @@ export async function POST(req: Request) {
       );
     }
 
-    // ===============================
-    // GET USER IP (IMPORTANT)
-    // ===============================
-    const ip =
-      req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "";
+    console.log("TOKEN LENGTH:", token?.length);
 
     // ===============================
-    // VERIFY TURNSTILE
+    // VERIFY TURNSTILE (FIXED)
     // ===============================
+    const formData = new FormData();
+    formData.append("secret", process.env.TURNSTILE_SECRET_KEY!);
+    formData.append("response", token);
+
     const verifyRes = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          secret: process.env.TURNSTILE_SECRET_KEY!,
-          response: token,
-          remoteip: ip,
-        }),
+        body: formData,
       },
     );
 
@@ -68,7 +61,7 @@ export async function POST(req: Request) {
     });
 
     // ===============================
-    // SEND MAIL
+    // SEND EMAIL
     // ===============================
     await transporter.sendMail({
       from: `"Website Form" <${process.env.MAIL_USERNAME}>`,
