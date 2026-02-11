@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLang } from "@/context/LanguageContext";
 import { dictionary } from "@/context/dictionary";
-import { useEffect } from "react";
 
 export default function Contact() {
   const { lang } = useLang();
@@ -43,21 +42,31 @@ export default function Contact() {
     setToken("");
 
     if ((window as any).turnstile) {
-      (window as any).turnstile.reset();
+      (window as any).turnstile.reset("#turnstile-widget");
     }
 
     setLoading(false);
   }
 
   useEffect(() => {
-    (window as any).onTurnstileExpire = () => {
-      setToken("");
-    };
+    const interval = setInterval(() => {
+      if ((window as any).turnstile) {
+        clearInterval(interval);
+
+        (window as any).turnstile.render("#turnstile-widget", {
+          sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+          callback: (t: string) => setToken(t),
+          "expired-callback": () => setToken(""),
+        });
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
   }, []);
+
   return (
     <section className="py-24 bg-orange-50" id="contact">
       <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-start">
-        {/* LEFT */}
         <div>
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-6">
             {t.contactTitle}
@@ -65,7 +74,6 @@ export default function Contact() {
           <p className="text-gray-700 mb-8 text-lg">{t.contactDesc}</p>
         </div>
 
-        {/* FORM */}
         <form
           onSubmit={handleSubmit}
           className="bg-white p-8 rounded-2xl shadow-lg space-y-6"
@@ -93,15 +101,8 @@ export default function Contact() {
             required
           />
 
-          {/* ✅ CAPTCHA */}
-          <div
-            className="cf-turnstile"
-            data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-            data-callback="onTurnstileSuccess"
-            data-expired-callback="onTurnstileExpire"
-          />
+          <div id="turnstile-widget" />
 
-          {/* BUTTON */}
           <button
             type="submit"
             disabled={loading || !token}
