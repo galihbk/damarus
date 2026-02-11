@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLang } from "@/context/LanguageContext";
 import { dictionary } from "@/context/dictionary";
-import Turnstile from "react-turnstile";
+import { useEffect } from "react";
 
 export default function Contact() {
   const { lang } = useLang();
@@ -53,7 +53,11 @@ export default function Contact() {
 
     setLoading(false);
   }
-
+  useEffect(() => {
+    (window as any).onTurnstileSuccess = (t: string) => {
+      setToken(t);
+    };
+  }, []);
   return (
     <section className="py-24 bg-orange-50" id="contact">
       <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-start">
@@ -94,10 +98,10 @@ export default function Contact() {
           />
 
           {/* ✅ CAPTCHA */}
-          <Turnstile
-            sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-            onVerify={(t) => setToken(t)}
-            onExpire={() => setToken("")}
+          <div
+            className="cf-turnstile"
+            data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+            data-callback="onTurnstileSuccess"
           />
 
           {/* BUTTON */}
