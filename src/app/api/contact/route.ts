@@ -1,13 +1,12 @@
 import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs"; // ⭐ IMPORTANT
+
 export async function POST(req: Request) {
   try {
     const { name, email, message, token } = await req.json();
 
-    // ===============================
-    // BASIC VALIDATION
-    // ===============================
     if (!name || !email || !message || !token) {
       return NextResponse.json(
         { ok: false, error: "Missing fields" },
@@ -18,9 +17,7 @@ export async function POST(req: Request) {
     console.log("TOKEN LENGTH:", token.length);
     console.log("SECRET LOADED:", !!process.env.TURNSTILE_SECRET_KEY);
 
-    // ===============================
-    // VERIFY TURNSTILE (STABLE VERSION)
-    // ===============================
+    // ✅ VERIFY TURNSTILE
     const verifyRes = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
       {
@@ -46,9 +43,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ===============================
-    // MAIL TRANSPORTER
-    // ===============================
+    // ✅ MAIL
     const transporter = nodemailer.createTransport({
       host: "smtp.hostinger.com",
       port: 465,
@@ -59,9 +54,6 @@ export async function POST(req: Request) {
       },
     });
 
-    // ===============================
-    // SEND EMAIL
-    // ===============================
     await transporter.sendMail({
       from: `"Website Form" <${process.env.MAIL_USERNAME}>`,
       to: process.env.MAIL_TO,
