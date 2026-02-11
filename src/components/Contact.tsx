@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useLang } from "@/context/LanguageContext";
 import { dictionary } from "@/context/dictionary";
 
@@ -7,8 +8,13 @@ export default function Contact() {
   const { lang } = useLang();
   const t = dictionary[lang];
 
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<null | "success" | "error">(null);
+
   async function handleSubmit(e: any) {
     e.preventDefault();
+    setLoading(true);
+    setStatus(null);
 
     const data = {
       name: e.target.name.value,
@@ -16,20 +22,26 @@ export default function Contact() {
       message: e.target.message.value,
     };
 
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-    if (res.ok) {
-      alert("Message sent!");
-      e.target.reset();
-    } else {
-      alert("Failed sending message");
+      if (res.ok) {
+        setStatus("success");
+        e.target.reset();
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
     }
+
+    setLoading(false);
   }
 
   return (
@@ -60,7 +72,7 @@ export default function Contact() {
           </div>
         </div>
 
-        {/* ✅ FIXED FORM */}
+        {/* FORM */}
         <form
           onSubmit={handleSubmit}
           className="bg-white p-8 rounded-2xl shadow-lg space-y-6"
@@ -68,7 +80,7 @@ export default function Contact() {
           <input
             name="name"
             placeholder={t.name}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black placeholder-gray-400"
             required
           />
 
@@ -76,7 +88,7 @@ export default function Contact() {
             name="email"
             type="email"
             placeholder="Email"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black placeholder-gray-400"
             required
           />
 
@@ -84,16 +96,39 @@ export default function Contact() {
             name="message"
             rows={4}
             placeholder={t.message}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black placeholder-gray-400"
             required
           />
 
+          {/* BUTTON */}
           <button
             type="submit"
-            className="w-full py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition"
+            disabled={loading}
+            className={`w-full py-3 font-semibold rounded-xl transition flex items-center justify-center gap-2
+            ${
+              loading
+                ? "bg-orange-300 cursor-not-allowed"
+                : "bg-orange-500 hover:bg-orange-600 text-white"
+            }`}
           >
-            {t.send}
+            {loading && (
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            )}
+            {loading ? "Sending..." : t.send}
           </button>
+
+          {/* STATUS MESSAGE */}
+          {status === "success" && (
+            <div className="text-green-600 font-medium">
+              ✅ Message sent successfully!
+            </div>
+          )}
+
+          {status === "error" && (
+            <div className="text-red-600 font-medium">
+              ❌ Failed sending message. Please try again.
+            </div>
+          )}
         </form>
       </div>
     </section>
