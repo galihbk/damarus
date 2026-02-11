@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs"; // ⭐ IMPORTANT
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
@@ -14,10 +14,11 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("TOKEN LENGTH:", token.length);
-    console.log("SECRET LOADED:", !!process.env.TURNSTILE_SECRET_KEY);
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      req.headers.get("x-real-ip") ||
+      "";
 
-    // ✅ VERIFY TURNSTILE
     const verifyRes = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
       {
@@ -28,13 +29,12 @@ export async function POST(req: Request) {
         body: new URLSearchParams({
           secret: process.env.TURNSTILE_SECRET_KEY!,
           response: token,
+          remoteip: ip,
         }),
       },
     );
 
     const verifyData = await verifyRes.json();
-
-    console.log("TURNSTILE DEBUG >>>", verifyData);
 
     if (!verifyData.success) {
       return NextResponse.json(
@@ -43,7 +43,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ MAIL
     const transporter = nodemailer.createTransport({
       host: "smtp.hostinger.com",
       port: 465,
@@ -69,8 +68,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error("CONTACT ERROR >>>", err);
-
     return NextResponse.json(
       { ok: false, error: "Server error" },
       { status: 500 },
