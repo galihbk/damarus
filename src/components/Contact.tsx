@@ -1,6 +1,5 @@
 "use client";
 
-import { Turnstile } from "nextjs-turnstile";
 import { useState } from "react";
 import { useLang } from "@/context/LanguageContext";
 import { dictionary } from "@/context/dictionary";
@@ -9,14 +8,11 @@ export default function Contact() {
   const { lang } = useLang();
   const t = dictionary[lang];
 
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<null | "success" | "error">(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    if (!token) return;
 
     setLoading(true);
 
@@ -27,7 +23,8 @@ export default function Contact() {
       email: (form.elements.namedItem("email") as HTMLInputElement).value,
       message: (form.elements.namedItem("message") as HTMLTextAreaElement)
         .value,
-      token,
+      company: (form.elements.namedItem("company") as HTMLInputElement).value,
+      started: form.dataset.started,
     };
 
     const res = await fetch("/api/contact", {
@@ -41,7 +38,6 @@ export default function Contact() {
     if (res.ok) {
       setStatus("success");
       form.reset();
-      setToken(null);
     } else {
       setStatus("error");
     }
@@ -60,6 +56,7 @@ export default function Contact() {
         </div>
 
         <form
+          data-started={Date.now()}
           onSubmit={handleSubmit}
           className="bg-white p-8 rounded-2xl shadow-lg space-y-6"
         >
@@ -86,19 +83,21 @@ export default function Contact() {
             required
           />
 
-          <Turnstile
-            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-            onSuccess={(t) => setToken(t)}
-            onExpire={() => setToken(null)}
-            onError={() => setToken(null)}
+          {/* Honeypot */}
+          <input
+            type="text"
+            name="company"
+            style={{ display: "none" }}
+            tabIndex={-1}
+            autoComplete="off"
           />
 
           <button
             type="submit"
-            disabled={loading || !token}
+            disabled={loading}
             className={`w-full py-3 font-semibold rounded-xl transition
               ${
-                loading || !token
+                loading
                   ? "bg-orange-300 cursor-not-allowed"
                   : "bg-orange-500 hover:bg-orange-600 text-white"
               }`}
@@ -114,7 +113,7 @@ export default function Contact() {
 
           {status === "error" && (
             <div className="text-red-600 font-medium">
-              ❌ Please complete captcha or try again.
+              ❌ Failed to send message
             </div>
           )}
         </form>
