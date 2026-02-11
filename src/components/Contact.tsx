@@ -16,46 +16,42 @@ export default function Contact() {
   async function handleSubmit(e: any) {
     e.preventDefault();
 
-    if (!token) {
-      setStatus("error");
-      return;
-    }
+    if (!token) return;
 
     setLoading(true);
-    setStatus(null);
 
     const data = {
       name: e.target.name.value,
       email: e.target.email.value,
       message: e.target.message.value,
-      token, // ✅ kirim token
+      token,
     };
 
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
 
-      if (res.ok) {
-        setStatus("success");
-        e.target.reset();
-        setToken(""); // reset captcha state
-      } else {
-        setStatus("error");
-      }
-    } catch {
+    if (res.ok) {
+      setStatus("success");
+      e.target.reset();
+    } else {
       setStatus("error");
+    }
+
+    setToken("");
+
+    if ((window as any).turnstile) {
+      (window as any).turnstile.reset();
     }
 
     setLoading(false);
   }
+
   useEffect(() => {
-    (window as any).onTurnstileSuccess = (t: string) => {
-      setToken(t);
+    (window as any).onTurnstileExpire = () => {
+      setToken("");
     };
   }, []);
   return (
@@ -102,6 +98,7 @@ export default function Contact() {
             className="cf-turnstile"
             data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
             data-callback="onTurnstileSuccess"
+            data-expired-callback="onTurnstileExpire"
           />
 
           {/* BUTTON */}
