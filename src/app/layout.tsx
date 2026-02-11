@@ -4,6 +4,7 @@ import "./globals.css";
 import { LangProvider } from "@/context/LanguageContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -99,6 +100,7 @@ export default function RootLayout({
         />
         <LangProvider>{children}</LangProvider>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );

@@ -15,20 +15,23 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("TOKEN LENGTH:", token?.length);
+    console.log("TOKEN LENGTH:", token.length);
+    console.log("SECRET LOADED:", !!process.env.TURNSTILE_SECRET_KEY);
 
     // ===============================
-    // VERIFY TURNSTILE (FIXED)
+    // VERIFY TURNSTILE (STABLE VERSION)
     // ===============================
-    const formData = new FormData();
-    formData.append("secret", process.env.TURNSTILE_SECRET_KEY!);
-    formData.append("response", token);
-
     const verifyRes = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
       {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          secret: process.env.TURNSTILE_SECRET_KEY!,
+          response: token,
+        }),
       },
     );
 
@@ -53,10 +56,6 @@ export async function POST(req: Request) {
       auth: {
         user: process.env.MAIL_USERNAME,
         pass: process.env.MAIL_PASSWORD,
-      },
-      tls: {
-        ciphers: "SSLv3",
-        rejectUnauthorized: false,
       },
     });
 
