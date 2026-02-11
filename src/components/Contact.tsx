@@ -117,7 +117,6 @@ export default function Contact() {
             {loading ? "Sending..." : t.send}
           </button>
 
-          {/* STATUS */}
           {status === "success" && (
             <div className="text-green-600 font-medium">
               ✅ Message sent successfully!
