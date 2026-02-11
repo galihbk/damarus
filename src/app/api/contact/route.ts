@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   );
 
   const verifyData = await verify.json();
-
+  console.log("TURNSTILE DEBUG >>>", verifyData);
   if (!verifyData.success) {
     return NextResponse.json(
       { ok: false, error: "Captcha failed" },
